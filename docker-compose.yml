@@ -1,0 +1,43 @@
+services:
+  mongo:
+    image: mongo:6
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build: ./backend
+    environment:
+      MONGO_URI: mongodb://mongo:27017/bank_app
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+    depends_on:
+      - mongo
+    restart: always
+
+  studentportfolio:
+    build: ./studentportfolio
+    restart: always
+
+  transactions:
+    build: ./transactions
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      PORT: "3000"
+    depends_on:
+      - mongo
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - studentportfolio
+      - transactions
+    restart: always
+
+volumes:
+  mongo_data:
